@@ -65,31 +65,28 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
-  try {
-    // Look up user by email
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res.status(400).json({ error: 'User does not exist' });
-    }
+  // Look up user by email in the database
+  const user = await prisma.user.findUnique({ where: { email } });
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ error: 'Invalid email or password' });
-    }
-
-    res.status(200).json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    console.error('Error logging in user:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!user) {
+    return res.status(400).json({ error: 'User does not exist' });
   }
+
+  // Compare entered password with hashed one in DB
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    return res.status(400).json({ error: 'Invalid email or password' });
+  }
+
+  res.status(200).json({
+    message: 'Login successful',
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+    }
+  });
 });
 
 // Start the server
