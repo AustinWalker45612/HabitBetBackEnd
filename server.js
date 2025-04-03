@@ -61,32 +61,38 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Route: Login a user
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
-  // Look up user by email in the database
-  const user = await prisma.user.findUnique({ where: { email } });
+  try {
+    // Find user by email from database
+    const user = await prisma.user.findUnique({ where: { email } });
 
-  if (!user) {
-    return res.status(400).json({ error: 'User does not exist' });
-  }
-
-  // Compare entered password with hashed one in DB
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-
-  if (!isPasswordValid) {
-    return res.status(400).json({ error: 'Invalid email or password' });
-  }
-
-  res.status(200).json({
-    message: 'Login successful',
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
+    if (!user) {
+      return res.status(400).json({ error: 'User does not exist' });
     }
-  });
+
+    // Compare input password with hashed password in database
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+
+    // Return successful login
+    return res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Start the server
