@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
+const jwt = require('jsonwebtoken');
+const authenticate = require('./authMiddleware');
 
 const prisma = new PrismaClient(); // Initialize Prisma Client
 const app = express();
@@ -61,27 +63,33 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// Route: Login a user and return JWT
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Find user by email from database
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       return res.status(400).json({ error: 'User does not exist' });
     }
 
-    // Compare input password with hashed password in database
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
-    // Return successful login
+    // ✅ Generate JWT
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    // ✅ Return it in the response
     return res.status(200).json({
       message: 'Login successful',
+      token, // 🔥 this is what your frontend needs
       user: {
         id: user.id,
         username: user.username,
@@ -89,9 +97,25 @@ app.post('/api/login', async (req, res) => {
       }
     });
 
-  } catch (error) {
-    console.error("Login error:", error);
+  } catch (err) {
+    console.error("Login error:", err);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// ✅ Protected route: Get user's habits
+app.get('/api/habits', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id; // From JWT
+    const habits = await prisma.habit.findMany({
+      where: { userId }
+    });
+
+    res.status(200).json(habits);
+  } catch (err) {
+    console.error("Error fetching habits:", err);
+    res.status(500).json({ error: "Failed to fetch habits" });
   }
 });
 
