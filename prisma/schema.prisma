@@ -1,34 +1,41 @@
-model HabitNode {
-  id          String   @id @default(cuid())
-  category    String   // e.g., "Fitness", "Mindfulness"
-  title       String   // e.g., "10-minute walk"
-  description String?
-  tier        Int      // 1-5 (or more later)
-  order       Int      // position within tier
-  xpValue     Int      // reward XP
-  isCustom    Boolean  @default(false)
+generator client {
+  provider = "prisma-client-js"
+}
 
-  habitLogs   HabitLog[]
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String   @id @default(uuid())
+  username String
+  email    String   @unique
+  password String
+  createdAt DateTime @default(now())
+
+  habitProgress HabitProgress[]
+}
+
+model HabitNode {
+  id       String @id @default(uuid())
+  title    String
+  category String
+  tier     Int
+  order    Int
+  xpValue  Int
+
+  habitProgress HabitProgress[]
 }
 
 model HabitProgress {
-  id         String   @id @default(cuid())
-  userId     String
-  habitId    String
-  status     String   // e.g., "locked", "unlocked", "completed"
-  completions Int     // how many times completed
+  id            String   @id @default(uuid())
+  userId        String
+  habitId       String
+  status        String   @default("locked") // could be 'locked', 'unlocked', 'completed'
+  completions   Int      @default(0)
   lastCompleted DateTime?
 
-  user       User     @relation(fields: [userId], references: [id])
-  habit      HabitNode @relation(fields: [habitId], references: [id])
-}
-
-model HabitLog {
-  id         String   @id @default(cuid())
-  userId     String
-  habitId    String
-  completedAt DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id])
-  habit      HabitNode @relation(fields: [habitId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+  habit         HabitNode @relation(fields: [habitId], references: [id])
 }

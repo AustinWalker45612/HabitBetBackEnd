@@ -103,19 +103,17 @@ app.get('/api/habits', authenticate, async (req, res) => {
 });
 
 // Structured habit tree
+// Structured habit tree
 app.get('/api/habits/tree', authenticate, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const tree = await prisma.habitNode.findMany({
-      orderBy: [{ tier: 'asc' }, { order: 'asc' }],
-      include: {
-        habitLogs: { where: { userId } },
-      },
+    const tree = await prisma.HabitNode.findMany({
+      orderBy: [{ tier: 'asc' }, { order: 'asc' }]
     });
 
-    const userProgress = await prisma.habitProgress.findMany({
-      where: { userId },
+    const userProgress = await prisma.HabitProgress.findMany({
+      where: { userId }
     });
 
     const result = tree.map((node) => {
@@ -138,6 +136,7 @@ app.get('/api/habits/tree', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Could not load habit tree' });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
