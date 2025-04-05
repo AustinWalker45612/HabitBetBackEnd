@@ -1,16 +1,34 @@
-generator client {
-  provider = "prisma-client-js"
+model HabitNode {
+  id          String   @id @default(cuid())
+  category    String   // e.g., "Fitness", "Mindfulness"
+  title       String   // e.g., "10-minute walk"
+  description String?
+  tier        Int      // 1-5 (or more later)
+  order       Int      // position within tier
+  xpValue     Int      // reward XP
+  isCustom    Boolean  @default(false)
+
+  habitLogs   HabitLog[]
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+model HabitProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  habitId    String
+  status     String   // e.g., "locked", "unlocked", "completed"
+  completions Int     // how many times completed
+  lastCompleted DateTime?
+
+  user       User     @relation(fields: [userId], references: [id])
+  habit      HabitNode @relation(fields: [habitId], references: [id])
 }
 
-model User {
-  id       Int    @id @default(autoincrement())
-  username String
-  email    String @unique
-  password String
-  createdAt DateTime @default(now())
+model HabitLog {
+  id         String   @id @default(cuid())
+  userId     String
+  habitId    String
+  completedAt DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  habit      HabitNode @relation(fields: [habitId], references: [id])
 }

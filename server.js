@@ -119,8 +119,50 @@ app.get('/api/habits', authenticate, async (req, res) => {
   }
 });
 
+// GET user's habit tree
+app.get('/api/habits/tree', authenticate, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const tree = await prisma.habitNode.findMany({
+      orderBy: [{ tier: 'asc' }, { order: 'asc' }],
+      include: {
+        habitLogs: {
+          where: { userId },
+        },
+      },
+    });
+
+    const userProgress = await prisma.habitProgress.findMany({
+      where: { userId },
+    });
+
+    const result = tree.map(node => {
+      const progress = userProgress.find(p => p.habitId === node.id);
+      return {
+        id: node.id,
+        title: node.title,
+        tier: node.tier,
+        order: node.order,
+        xpValue: node.xpValue,
+        status: progress?.status || 'locked',
+        completions: progress?.completions || 0,
+        lastCompleted: progress?.lastCompleted || null,
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('Failed to load habit tree:', err);
+    res.status(500).json({ error: 'Could not load habit tree' });
+  }
+});
+
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
