@@ -11,17 +11,18 @@ const authenticate = require('./authMiddleware');
 const prisma = new PrismaClient();
 const app = express();
 
+// Middleware
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Basic test route
+// Test route
 app.get('/', (req, res) => {
   res.send('Backend server is running!');
 });
 
-// Register new user
+// Register
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -33,7 +34,7 @@ app.post('/api/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
-      data: { username, email, password: hashedPassword }
+      data: { username, email, password: hashedPassword },
     });
 
     const token = jwt.sign(
@@ -48,8 +49,8 @@ app.post('/api/register', async (req, res) => {
       user: {
         id: newUser.id,
         username: newUser.username,
-        email: newUser.email
-      }
+        email: newUser.email,
+      },
     });
   } catch (error) {
     console.error('Error registering user:', error);
@@ -57,7 +58,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Login and return JWT
+// Login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -79,29 +80,29 @@ app.post('/api/login', async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
-      }
+        email: user.email,
+      },
     });
   } catch (err) {
-    console.error("Login error:", err);
+    console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get all habits for user
+// Get all user-created habits (if still needed)
 app.get('/api/habits', authenticate, async (req, res) => {
   try {
     const habits = await prisma.habit.findMany({
-      where: { userId: req.user.id }
+      where: { userId: req.user.id },
     });
     res.status(200).json(habits);
   } catch (err) {
-    console.error("Error fetching habits:", err);
-    res.status(500).json({ error: "Failed to fetch habits" });
+    console.error('Error fetching habits:', err);
+    res.status(500).json({ error: 'Failed to fetch habits' });
   }
 });
 
-// Get user's habit tree
+// Structured habit tree
 app.get('/api/habits/tree', authenticate, async (req, res) => {
   const userId = req.user.id;
 
@@ -117,8 +118,8 @@ app.get('/api/habits/tree', authenticate, async (req, res) => {
       where: { userId },
     });
 
-    const result = tree.map(node => {
-      const progress = userProgress.find(p => p.habitId === node.id);
+    const result = tree.map((node) => {
+      const progress = userProgress.find((p) => p.habitId === node.id);
       return {
         id: node.id,
         title: node.title,
