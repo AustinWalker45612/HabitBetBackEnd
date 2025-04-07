@@ -8,34 +8,31 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(uuid())
-  username String
-  email    String   @unique
-  password String
-  createdAt DateTime @default(now())
-
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String
+  email         String          @unique
+  password      String
+  createdAt     DateTime        @default(now())
   habitProgress HabitProgress[]
 }
 
 model HabitNode {
-  id       String @id @default(uuid())
-  title    String @unique
-  category String
-  tier     Int
-  order    Int
-  xpValue  Int
-
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  category      String
+  tier          Int
+  order         Int
+  xpValue       Int
   habitProgress HabitProgress[]
 }
 
 model HabitProgress {
-  id            String   @id @default(uuid())
-  userId        String
-  habitId       String
-  status        String   @default("locked") // could be 'locked', 'unlocked', 'completed'
-  completions   Int      @default(0)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @db.Uuid
+  habitId       String    @db.Uuid
+  status        String    @default("locked")
+  completions   Int       @default(0)
   lastCompleted DateTime?
-
-  user          User      @relation(fields: [userId], references: [id])
   habit         HabitNode @relation(fields: [habitId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 }
