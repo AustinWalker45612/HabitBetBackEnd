@@ -96,11 +96,11 @@ app.get('/api/habits/tree', authenticate, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const tree = await prisma.HabitNode.findMany({
+    const tree = await prisma.habitNode.findMany({
       orderBy: [{ tier: 'asc' }, { order: 'asc' }]
     });
 
-    const userProgress = await prisma.HabitProgress.findMany({
+    const userProgress = await prisma.habitProgress.findMany({
       where: { userId }
     });
 
