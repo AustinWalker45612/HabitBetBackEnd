@@ -89,18 +89,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Get all user-created habits (if still needed)
-app.get('/api/habits', authenticate, async (req, res) => {
-  try {
-    const habits = await prisma.habit.findMany({
-      where: { userId: req.user.id },
-    });
-    res.status(200).json(habits);
-  } catch (err) {
-    console.error('Error fetching habits:', err);
-    res.status(500).json({ error: 'Failed to fetch habits' });
-  }
-});
 
 // Structured habit tree
 // Structured habit tree
