@@ -1,7 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
+
 const prisma = new PrismaClient();
 
 async function main() {
+  // 1. Seed Habits
   const habits = [
     { category: 'Fitness', title: 'Walk 10 min', tier: 1, order: 1, xpValue: 5 },
     { category: 'Fitness', title: '15 Pushups', tier: 1, order: 2, xpValue: 10 },
@@ -18,7 +21,34 @@ async function main() {
     });
   }
 
-  console.log('✅ Seeded habit tree.');
+  // 2. Create Test User
+  const hashedPassword = await bcrypt.hash('password123', 10);
+  const testUser = await prisma.user.upsert({
+    where: { email: 'test@example.com' },
+    update: {},
+    create: {
+      username: 'TestUser',
+      email: 'test@example.com',
+      password: hashedPassword,
+    },
+  });
+
+  // 3. Fetch the seeded habits
+  const allHabits = await prisma.habitNode.findMany();
+
+  // 4. Seed HabitProgress for the user
+  for (const habit of allHabits) {
+    await prisma.habitProgress.create({
+      data: {
+        userId: testUser.id,
+        habitId: habit.id,
+        status: 'unlocked',
+        completions: 0,
+      },
+    });
+  }
+
+  console.log('✅ Seeded habits, test user, and habit progress.');
 }
 
 main()
