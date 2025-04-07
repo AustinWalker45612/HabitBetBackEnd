@@ -33,9 +33,12 @@ app.post('/api/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('Creating user with data:', { username, email, password: hashedPassword });
     const newUser = await prisma.user.create({
-      data: { username, email, password: hashedPassword },
-    });
+        data: { username, email, password: hashedPassword },
+      });
+
+    console.log('New user created:', newUser);
 
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email },
