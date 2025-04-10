@@ -23,6 +23,7 @@ app.get('/', (req, res) => {
 });
 
 // Register
+//fixing prisma client error
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
   console.log('userData to add: ', req.body);
