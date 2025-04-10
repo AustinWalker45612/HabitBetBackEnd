@@ -25,6 +25,7 @@ app.get('/', (req, res) => {
 // Register
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
+  console.log('userData to add: ', req.body);
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
