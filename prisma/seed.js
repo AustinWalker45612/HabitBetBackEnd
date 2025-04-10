@@ -4,7 +4,12 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  // 1. Seed Habits
+  // 1. Delete existing data (optional but useful for dev reset)
+  await prisma.habitProgress.deleteMany();
+  await prisma.habitNode.deleteMany();
+  await prisma.user.deleteMany();
+
+  // 2. Seed Habits
   const habits = [
     { category: 'Fitness', title: 'Walk 10 min', tier: 1, order: 1, xpValue: 5 },
     { category: 'Fitness', title: '15 Pushups', tier: 1, order: 2, xpValue: 10 },
@@ -13,31 +18,25 @@ async function main() {
     { category: 'Fitness', title: '5 Workouts in 7 Days', tier: 3, order: 1, xpValue: 30 },
   ];
 
+  const createdHabits = [];
+
   for (const habit of habits) {
-    await prisma.habitNode.upsert({
-      where: { title: habit.title },
-      update: {},
-      create: habit,
-    });
+    const created = await prisma.habitNode.create({ data: habit });
+    createdHabits.push(created);
   }
 
-  // 2. Create Test User
+  // 3. Create Test User
   const hashedPassword = await bcrypt.hash('password123', 10);
-  const testUser = await prisma.user.upsert({
-    where: { email: 'test@example.com' },
-    update: {},
-    create: {
+  const testUser = await prisma.user.create({
+    data: {
       username: 'TestUser',
       email: 'test@example.com',
       password: hashedPassword,
     },
   });
 
-  // 3. Fetch the seeded habits
-  const allHabits = await prisma.habitNode.findMany();
-
   // 4. Seed HabitProgress for the user
-  for (const habit of allHabits) {
+  for (const habit of createdHabits) {
     await prisma.habitProgress.create({
       data: {
         userId: testUser.id,
@@ -53,7 +52,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Error during seed:', e);
     process.exit(1);
   })
   .finally(async () => {
